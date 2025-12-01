@@ -1,0 +1,45 @@
+poke-tower-defense/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py              # Точка входа FastAPI
+│   │   ├── config.py            # Конфигурация
+│   │   ├── database.py          # Инициализация БД
+│   │   ├── models.py            # SQLAlchemy модели
+│   │   ├── schemas.py           # Pydantic схемы
+│   │   ├── crud.py              # Операции с БД
+│   │   ├── auth.py              # Аутентификация
+│   │   ├── game_logic.py        # Логика игры
+│   │   └── routers/
+│   │       ├── __init__.py
+│   │       ├── auth.py          # Роуты регистрации/логина
+│   │       ├── users.py         # Роуты пользователей
+│   │       ├── game.py          # Роуты игры
+│   │       └── leaderboard.py   # Роуты лидерборда
+│   ├── alembic/                 # Миграции (позже)
+│   ├── tests/                   # Тесты
+│   └── requirements.txt
+├── frontend/
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── style.css
+│   │   │   ├── lobby.css
+│   │   │   └── game.css
+│   │   ├── js/
+│   │   │   ├── auth.js
+│   │   │   ├── lobby.js
+│   │   │   ├── game.js
+│   │   │   └── utils.js
+│   │   └── images/
+│   │       ├── pokeball.png
+│   │       └── pokemons/       # Спрайты покемонов
+│   └── templates/
+│       ├── base.html
+│       ├── index.html          # Главная/регистрация
+│       ├── login.html
+│       ├── lobby.html
+│       └── game.html
+├── data/                       # Директория для SQLite
+├── .gitignore
+├── README.md
+└── docker-compose.yml         # Для будущего масштабирования

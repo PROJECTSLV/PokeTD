@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Pokemon Tower Defense - Game{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/game.css">
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <!-- Панель информации -->
+    <div class="game-info">
+        <div class="health-bar">
+            <span>HP:</span>
+            <div class="health-bar-container">
+                <div id="playerHealth" class="health-bar-fill" style="width: 100%"></div>
+            </div>
+            <span id="healthValue">100</span>
+        </div>
+
+        <div class="level-info">
+            <div>Level: <span id="playerLevel">1</span></div>
+            <div>XP: <span id="playerExp">0</span>/<span id="playerMaxExp">100</span></div>
+        </div>
+
+        <div class="game-stats">
+            <div>Wave: <span id="currentWave">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Pokeballs: <span id="pokeballCount">5</span></div>
+        </div>
+    </div>
+
+    <!-- Игровое поле -->
+    <div class="game-field-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <!-- Рука игрока -->
+    <div class="player-hand">
+        <h3>Your Hand</h3>
+        <div class="cards-container" id="handContainer">
+            <!-- Карты заполняются через JS -->
+            <div style="text-align: center; width: 100%; padding: 40px; color: #666;">
+                No cards in hand. Open a pokeball to get your first Pokemon!
+            </div>
+        </div>
+        <button id="openPokeballBtn" class="btn btn-pokeball">
+            🎯 Open Pokeball (Left: <span id="pokeballsLeft">5</span>)
+        </button>
+    </div>
+
+    <!-- Кнопки управления -->
+    <div class="game-controls">
+        <button id="pauseBtn" class="btn btn-control">Pause</button>
+        <button id="quitBtn" class="btn btn-control btn-danger">Surrender</button>
+    </div>
+
+    <!-- Модальное окно конца игры -->
+    <div class="end-game-modal" id="endGameModal">
+        <div class="modal-content">
+            <h2 id="gameResultTitle"></h2>
+            <div class="game-result-stats">
+                <p>Score: <span id="finalScore">0</span></p>
+                <p>Waves Completed: <span id="finalWaves">0</span></p>
+                <p>Enemies Defeated: <span id="finalEnemies">0</span></p>
+            </div>
+            <div class="modal-buttons">
+                <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
+                <button id="returnToLobbyBtn" class="btn btn-secondary">Back to Lobby</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="/static/js/game.js"></script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Pokemon Tower Defense - Лобби{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/lobby.css">
+{% endblock %}
+
+{% block content %}
+<div class="lobby-container">
+    <div class="player-info">
+        <h2>Привет, <span id="playerName">Игрок</span>!</h2>
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Лучший счет:</span>
+                <span id="highScore" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Всего волн:</span>
+                <span id="totalWaves" class="stat-value">0</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-options">
+        <h3>Выберите локацию:</h3>
+        <div class="locations">
+            <div class="location-card selected" data-location="pallet">
+                <h4>Паллет Таун</h4>
+                <p>Начните ваше путешествие здесь!</p>
+            </div>
+        </div>
+        
+        <button id="startGameBtn" class="btn-start">Начать игру</button>
+        <button id="leaderboardBtn" class="btn-secondary">Таблица лидеров</button>
+        <button id="logoutBtn" class="btn-logout">Выйти</button>
+    </div>
+    
+    <div class="leaderboard-modal" id="leaderboardModal">
+        <div class="modal-content">
+            <h3>Таблица лидеров</h3>
+            <div class="leaderboard-list" id="leaderboardList">
+                <!-- Заполняется через JS -->
+            </div>
+            <button class="btn-close" id="closeLeaderboardBtn">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="/static/js/lobby.js"></script>
+{% endblock %}
+{% endblock %}
