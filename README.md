@@ -15,7 +15,7 @@ source venv/bin/activate  # или venv\Scripts\activate на Windows
 pip install -r requirements.txt
 python backend/main.py
 
-✨ Особенности версии 1.0.0
+✨ Особенности версии 0.0.2
 
 🎯 Основные изменения:
 
