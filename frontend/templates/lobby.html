@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Pokemon Tower Defense - Лобби{% endblock %}
+{% block title %}Pokemon Tower Defense - Lobby{% endblock %}
+
+{% block body_class %}lobby-body{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/lobby.css">
@@ -8,42 +10,165 @@
 
 {% block content %}
 <div class="lobby-container">
-    <div class="player-info">
-        <h2>Привет, <span id="playerName">Игрок</span>!</h2>
-        <div class="stats">
-            <div class="stat-item">
-                <span class="stat-label">Лучший счет:</span>
-                <span id="highScore" class="stat-value">0</span>
+    <div class="lobby-grid">
+        <!-- Заголовок -->
+        <header id="lobby-header" class="lobby-card">
+            <div class="logo-section">
+                <div class="logo-icon">⚔️</div>
+                <div class="logo-text">
+                    <h1>Pokemon Tower Defense</h1>
+                    <p>Defend your base from wild Pokemon waves!</p>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Всего волн:</span>
-                <span id="totalWaves" class="stat-value">0</span>
+            <div class="user-section">
+                <div class="welcome-text">
+                    <h3>Welcome back, <span id="username">Trainer</span>!</h3>
+                    <p>Ready for your next adventure?</p>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="game-options">
-        <h3>Выберите локацию:</h3>
-        <div class="locations">
-            <div class="location-card selected" data-location="pallet">
-                <h4>Паллет Таун</h4>
-                <p>Начните ваше путешествие здесь!</p>
+        </header>
+
+        <!-- Панель игрока -->
+        <aside id="player-panel">
+            <div class="player-info-card lobby-card">
+                <div class="player-avatar" id="playerAvatar">T</div>
+                <div class="player-details">
+                    <h3 id="playerName">Trainer</h3>
+                    <div class="player-rank">
+                        <span>🏆</span>
+                        <span>Pokemon Trainer</span>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <button id="startGameBtn" class="btn-start">Начать игру</button>
-        <button id="leaderboardBtn" class="btn-secondary">Таблица лидеров</button>
-        <button id="logoutBtn" class="btn-logout">Выйти</button>
-    </div>
-    
-    <div class="leaderboard-modal" id="leaderboardModal">
-        <div class="modal-content">
-            <h3>Таблица лидеров</h3>
-            <div class="leaderboard-list" id="leaderboardList">
-                <!-- Заполняется через JS -->
+
+            <div class="stats-card lobby-card">
+                <h4>Statistics</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Coins</div>
+                            <div id="pokeCoins" class="stat-value">100</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Best Score</div>
+                            <div id="highScore" class="stat-value">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🌊</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Waves</div>
+                            <div id="totalWaves" class="stat-value">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">⚔️</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Enemies</div>
+                            <div id="totalEnemies" class="stat-value">0</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button class="btn-close" id="closeLeaderboardBtn">Закрыть</button>
-        </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main id="main-content">
+            <div class="location-card lobby-card">
+                <div class="location-header">
+                    <h3>Select Adventure</h3>
+                    <p>Choose where to begin your journey</p>
+                </div>
+                <div class="locations-container">
+                    <div class="location-item selected" data-location="pallet">
+                        <div class="location-image">
+                            <img src="/static/images/locations/pallet-town.jpg"
+                                 alt="Pallet Town"
+                                 onerror="this.src='/static/images/ui/default-location.jpg'">
+                            <div class="location-badge">Beginner</div>
+                        </div>
+                        <div class="location-info">
+                            <h4>Pallet Town</h4>
+                            <p class="location-desc">Perfect for new trainers</p>
+                            <div class="location-difficulty">
+                                <span class="difficulty-label">Difficulty:</span>
+                                <span class="difficulty-value easy">Easy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="location-item" data-location="viridian">
+                        <div class="location-image">
+                            <img src="/static/images/ui/default-location.jpg" alt="Viridian Forest">
+                            <div class="location-badge">Locked</div>
+                        </div>
+                        <div class="location-info">
+                            <h4>Viridian Forest</h4>
+                            <p class="location-desc">Complete Pallet Town to unlock</p>
+                            <div class="location-difficulty">
+                                <span class="difficulty-label">Difficulty:</span>
+                                <span class="difficulty-value medium">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="start-game-card lobby-card">
+                <button id="startGameBtn" class="start-game-btn">
+                    <span class="btn-icon">▶️</span>
+                    <span class="btn-text">Start Adventure</span>
+                </button>
+                <p class="game-hint">Select a location and press Start to begin</p>
+            </div>
+        </main>
+
+        <!-- Боковая панель -->
+        <aside id="side-panel">
+            <div class="leaderboard-card lobby-card">
+                <h4>Top Trainers</h4>
+                <div class="leaderboard-list" id="leaderboardList">
+                    <div class="loading">Loading leaderboard...</div>
+                </div>
+                <button id="viewLeaderboardBtn" class="view-more-btn">View Full Leaderboard</button>
+            </div>
+
+            <div class="navigation-card lobby-card">
+                <h4>Navigation</h4>
+                <div class="nav-buttons">
+                    <button id="collectionBtn" class="nav-btn">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-text">Pokemon Collection</span>
+                    </button>
+                    <button id="shopBtn" class="nav-btn">
+                        <span class="nav-icon">🛒</span>
+                        <span class="nav-text">Shop</span>
+                    </button>
+                    <button id="settingsBtn" class="nav-btn">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </button>
+                    <button id="logoutBtn" class="nav-btn">
+                        <span class="nav-icon">🚪</span>
+                        <span class="nav-text">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Нижняя панель -->
+        <footer id="bottom-panel">
+            <div class="recent-games-card lobby-card">
+                <h4>Recent Games</h4>
+                <div class="games-list" id="recentGames">
+                    <div class="loading">Loading games...</div>
+                </div>
+            </div>
+        </footer>
     </div>
 </div>
 

@@ -2,71 +2,168 @@
 
 {% block title %}Pokemon Tower Defense - Game{% endblock %}
 
+{% block body_class %}game-body{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/game.css">
 {% endblock %}
 
 {% block content %}
-<div class="game-container">
-    <!-- Панель информации -->
-    <div class="game-info">
-        <div class="health-bar">
-            <span>HP:</span>
-            <div class="health-bar-container">
-                <div id="playerHealth" class="health-bar-fill" style="width: 100%"></div>
-            </div>
-            <span id="healthValue">100</span>
-        </div>
-
-        <div class="level-info">
-            <div>Level: <span id="playerLevel">1</span></div>
-            <div>XP: <span id="playerExp">0</span>/<span id="playerMaxExp">100</span></div>
-        </div>
-
+<div class="game-wrapper">
+    <!-- Верхняя панель - только для мобилок -->
+    <div class="top-panel mobile-only">
         <div class="game-stats">
-            <div>Wave: <span id="currentWave">1</span></div>
-            <div>Score: <span id="score">0</span></div>
-            <div>Pokeballs: <span id="pokeballCount">5</span></div>
-        </div>
-    </div>
-
-    <!-- Игровое поле -->
-    <div class="game-field-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-    </div>
-
-    <!-- Рука игрока -->
-    <div class="player-hand">
-        <h3>Your Hand</h3>
-        <div class="cards-container" id="handContainer">
-            <!-- Карты заполняются через JS -->
-            <div style="text-align: center; width: 100%; padding: 40px; color: #666;">
-                No cards in hand. Open a pokeball to get your first Pokemon!
+            <div class="stat-item">
+                <span class="stat-icon">🌊</span>
+                <span id="currentWave" class="stat-number">1</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🎯</span>
+                <span id="pokeballCount" class="stat-number">5</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">💰</span>
+                <span id="pokeCoins" class="stat-number">0</span>
             </div>
         </div>
-        <button id="openPokeballBtn" class="btn btn-pokeball">
-            🎯 Open Pokeball (Left: <span id="pokeballsLeft">5</span>)
-        </button>
+
+        <!-- Кнопки паузы и выхода на мобилках -->
+        <div class="mobile-controls-top">
+            <button id="pauseBtnMobile" class="mobile-btn">
+                <span class="btn-icon">⏸️</span>
+            </button>
+            <button id="quitBtnMobile" class="mobile-btn btn-danger">
+                <span class="btn-icon">🏳️</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Кнопки управления -->
-    <div class="game-controls">
-        <button id="pauseBtn" class="btn btn-control">Pause</button>
-        <button id="quitBtn" class="btn btn-control btn-danger">Surrender</button>
+    <!-- Основной контейнер игры -->
+    <div class="game-main">
+        <!-- Левая панель (альбомная ориентация) -->
+        <div class="left-panel desktop-only">
+            <div class="panel-content">
+                <h3>Stats</h3>
+                <div class="compact-stats">
+                    <div class="compact-stat">
+                        <div class="stat-label">Health</div>
+                        <div class="stat-bar">
+                            <div id="compactHealth" class="bar-fill health-fill"></div>
+                        </div>
+                    </div>
+                    <div class="compact-stat">
+                        <div class="stat-label">XP Lv.<span id="compactLevel">1</span></div>
+                        <div class="stat-bar">
+                            <div id="compactXp" class="bar-fill xp-fill"></div>
+                        </div>
+                    </div>
+                    <div class="compact-numbers">
+                        <div class="number-item">
+                            <span class="stat-icon">🌊</span>
+                            <span id="compactWave">1</span>
+                        </div>
+                        <div class="number-item">
+                            <span class="stat-icon">💰</span>
+                            <span id="compactCoins">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Покебол между кнопками -->
+                <div class="pokeball-section-desktop">
+                    <button id="openPokeballBtn" class="pokeball-btn-desktop">
+                        <img src="/static/images/ui/pokeball.png" alt="Pokeball" class="pokeball-img-desktop">
+                        <span class="pokeball-count-desktop" id="pokeballsLeft">5</span>
+                    </button>
+                </div>
+
+                <!-- Кнопки управления -->
+                <div class="controls">
+                    <button id="pauseBtn" class="control-btn">
+                        <span class="btn-icon">⏸️</span>
+                        <span class="btn-text">Pause</span>
+                    </button>
+                    <button id="quitBtn" class="control-btn btn-danger">
+                        <span class="btn-icon">🏳️</span>
+                        <span class="btn-text">Quit</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Центральное поле игры -->
+        <div class="game-field">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <!-- Правая панель (альбомная ориентация) - только для карт -->
+        <div class="right-panel desktop-only">
+            <div class="panel-content">
+                <div class="hand-header">
+                    <h3>Your Hand</h3>
+                    <div class="hand-count" id="handCount">0</div>
+                </div>
+                <div class="cards-container-vertical" id="handContainer">
+                    <div class="empty-hand">
+                        <div class="empty-icon">🃏</div>
+                        <p>No cards in hand</p>
+                        <p class="hint">Open a pokeball to get Pokemon!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Модальное окно конца игры -->
-    <div class="end-game-modal" id="endGameModal">
+    <!-- Нижняя панель (портретная ориентация) -->
+    <div class="bottom-panel mobile-only">
+        <div class="hand-section">
+            <div class="hand-header">
+                <h4>🎴 Hand</h4>
+                <!-- Покебол в углу на мобилках -->
+                <div class="pokeball-corner">
+                    <button id="openPokeballBtnMobile" class="pokeball-btn-corner">
+                        <img src="/static/images/ui/pokeball.png" alt="Pokeball">
+                        <span class="count-corner" id="pokeballsLeftMobile">5</span>
+                    </button>
+                </div>
+            </div>
+            <div class="mobile-cards" id="handContainerMobile">
+                <!-- Заполняется через JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно конца игры -->
+<div class="end-game-modal" id="endGameModal">
+    <div class="modal-overlay">
         <div class="modal-content">
             <h2 id="gameResultTitle"></h2>
-            <div class="game-result-stats">
-                <p>Score: <span id="finalScore">0</span></p>
-                <p>Waves Completed: <span id="finalWaves">0</span></p>
-                <p>Enemies Defeated: <span id="finalEnemies">0</span></p>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-label">Coins Earned:</span>
+                    <span id="finalCoins" class="stat-value">0</span>
+                </div>
+                <div class="result-stat">
+                    <span class="stat-icon">🌊</span>
+                    <span class="stat-label">Waves:</span>
+                    <span id="finalWaves" class="stat-value">0</span>
+                </div>
+                <div class="result-stat">
+                    <span class="stat-icon">👾</span>
+                    <span class="stat-label">Enemies:</span>
+                    <span id="finalEnemies" class="stat-value">0</span>
+                </div>
+                <div class="result-stat total">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-label">Total Coins:</span>
+                    <span id="totalCoins" class="stat-value">0</span>
+                </div>
             </div>
             <div class="modal-buttons">
-                <button id="playAgainBtn" class="btn btn-primary">Play Again</button>
-                <button id="returnToLobbyBtn" class="btn btn-secondary">Back to Lobby</button>
+                <button id="playAgainBtn" class="modal-btn btn-primary">🔄 Play Again</button>
+                <button id="returnToLobbyBtn" class="modal-btn btn-secondary">🏠 Lobby</button>
             </div>
         </div>
     </div>

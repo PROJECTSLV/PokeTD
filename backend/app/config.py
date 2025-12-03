@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # База данных - исправленный путь
-    SQLALCHEMY_DATABASE_URL: str = "sqlite:///./game.db"  # Упрощенный путь
+    SQLALCHEMY_DATABASE_URL: str = "sqlite:///./game.db4"  # Упрощенный путь
 
     # JWT
     SECRET_KEY: str = "your-secret-key-change-in-production"  # Замените!

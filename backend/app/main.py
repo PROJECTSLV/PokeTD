@@ -84,3 +84,4 @@ async def play(request: Request):
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "Pokemon Tower Defense"}
+

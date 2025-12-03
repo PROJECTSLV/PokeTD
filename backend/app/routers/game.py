@@ -6,6 +6,9 @@ from ..database import get_db
 
 router = APIRouter(prefix="/api/v1/game", tags=["game"])
 
+# ⭐ ВАЖНО: храним активные игры в памяти
+active_games = {}
+
 
 @router.post("/start")
 def start_game(
@@ -14,12 +17,20 @@ def start_game(
 ):
     """Начало новой игры"""
     # Завершаем старую игру, если есть
-    if current_user.id in game_logic.active_games:
-        del game_logic.active_games[current_user.id]
+    if current_user.id in active_games:
+        try:
+            # Сохраняем результат старой игры
+            game = active_games[current_user.id]
+            result = game.get_game_result()
+            game_result = schemas.GameResult(**result)
+            crud.create_game_session(db, game_result, current_user.id)
+            del active_games[current_user.id]
+        except Exception as e:
+            print(f"⚠️ Error ending previous game: {e}")
 
     # Создаем новую игру
     game = game_logic.PokemonGameLogic(current_user.id)
-    game_logic.active_games[current_user.id] = game
+    active_games[current_user.id] = game
 
     # Сразу обновляем состояние, чтобы появились враги
     game.update(0)
@@ -33,20 +44,24 @@ def game_action(
         current_user: schemas.UserResponse = Depends(get_current_user)
 ):
     """Выполнение действия в игре"""
-    if current_user.id not in game_logic.active_games:
+    if current_user.id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    game = game_logic.active_games[current_user.id]
+    game = active_games[current_user.id]
+
+    # ⭐ ВАЖНО: проверяем, не закончилась ли игра
+    if game.game_over:
+        return {"error": "Game is already over"}
 
     if action.action_type == "open_pokeball":
         result = game.open_pokeball()
     elif action.action_type == "play_card":
         if not action.data:
             raise HTTPException(status_code=400, detail="Missing card data")
+        # ⭐ ИЗМЕНЕНИЕ: передаем только X координату
         result = game.play_card(
             card_id=action.data.get("card_id"),
-            x=action.data.get("x"),
-            y=action.data.get("y")
+            x=action.data.get("x")
         )
     else:
         raise HTTPException(status_code=400, detail="Unknown action type")
@@ -62,10 +77,10 @@ def get_game_state(
         current_user: schemas.UserResponse = Depends(get_current_user)
 ):
     """Получение текущего состояния игры"""
-    if current_user.id not in game_logic.active_games:
+    if current_user.id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    game = game_logic.active_games[current_user.id]
+    game = active_games[current_user.id]
 
     # Обновляем состояние игры перед возвратом
     state = game.update(0.1)  # небольшое обновление
@@ -79,10 +94,10 @@ def update_game(
         current_user: schemas.UserResponse = Depends(get_current_user)
 ):
     """Обновление игрового состояния (для автоматических обновлений)"""
-    if current_user.id not in game_logic.active_games:
+    if current_user.id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    game = game_logic.active_games[current_user.id]
+    game = active_games[current_user.id]
     state = game.update(delta_time)
 
     return state
@@ -94,17 +109,31 @@ def end_game(
         db: Session = Depends(get_db)
 ):
     """Завершение игры и сохранение результата"""
-    if current_user.id not in game_logic.active_games:
+    if current_user.id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    game = game_logic.active_games[current_user.id]
-    result = game.get_game_result()
+    try:
+        game = active_games[current_user.id]
+        result = game.get_game_result()
 
-    # Сохраняем результат
-    game_result = schemas.GameResult(**result)
-    crud.create_game_session(db, game_result, current_user.id)
+        # ⭐ ВАЖНО: ВСЕГДА сохраняем результат
+        game_result = schemas.GameResult(**result)
+        saved_session = crud.create_game_session(db, game_result, current_user.id)
 
-    # Удаляем игру из активных
-    del game_logic.active_games[current_user.id]
+        print(f"🎮 Game ended for user {current_user.id}. Coins earned: {result['poke_coins_earned']}")
 
-    return result
+        # Удаляем игру из активных
+        del active_games[current_user.id]
+
+        return {
+            **result,
+            "session_id": saved_session.id,
+            "message": "Game saved successfully"
+        }
+
+    except Exception as e:
+        print(f"❌ Error saving game result: {e}")
+        # ⭐ ВАЖНО: даже при ошибке удаляем игру из памяти
+        if current_user.id in active_games:
+            del active_games[current_user.id]
+        raise HTTPException(status_code=500, detail=f"Failed to save game result: {str(e)}")

@@ -1,7 +1,7 @@
 from sqlalchemy import Boolean, Column, Integer, String, Float, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .database import Base  # Изменено: добавлена точка перед database
+from .database import Base
 
 
 class User(Base):
@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    poke_coins = Column(Integer, default=100)  # ⭐ НОВОЕ: начальные монеты
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
 
@@ -25,6 +26,7 @@ class GameSession(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     score = Column(Integer, default=0)
+    poke_coins_earned = Column(Integer, default=0)  # ⭐ НОВОЕ: заработанные монеты за игру
     waves_completed = Column(Integer, default=0)
     pokemons_caught = Column(Integer, default=0)
     enemies_defeated = Column(Integer, default=0)

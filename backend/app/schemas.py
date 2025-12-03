@@ -20,6 +20,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    poke_coins: int = 100  # ⭐ НОВОЕ: начальные монеты
     created_at: datetime
     is_active: bool
 
@@ -53,6 +54,7 @@ class GameState(BaseModel):
     player_exp: int
     player_max_exp: int
     pokeballs: int
+    poke_coins: int  # ⭐ НОВОЕ: монеты в состоянии игры
     hand: List[PokemonData]
     field: List[Dict[str, Any]]  # Покемоны на поле
     enemies: List[Dict[str, Any]]  # Враги на поле
@@ -68,6 +70,7 @@ class GameAction(BaseModel):
 class GameResult(BaseModel):
     victory: bool
     score: int
+    poke_coins_earned: int  # ⭐ НОВОЕ: заработанные монеты
     waves_completed: int
     pokemons_caught: int
     enemies_defeated: int

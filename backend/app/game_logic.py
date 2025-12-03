@@ -17,6 +17,7 @@ class PokemonGameLogic:
         self.player_max_exp = 100
         self.pokeballs = 5
         self.score = 0
+        self.poke_coins = 0  # ⭐ НОВОЕ: монеты за игру
         self.wave = 1
         self.game_over = False
         self.victory = False
@@ -30,7 +31,7 @@ class PokemonGameLogic:
         # Логика волн
         self.wave_data = self.generate_wave(self.wave)
         self.enemy_spawn_timer = 0
-        self.enemy_spawn_interval = 1.5  # Уменьшили с 2.0 до 1.5 секунд
+        self.enemy_spawn_interval = 1.5
 
         # Позиция базы игрока (нижняя линия)
         self.player_base_y = 450  # Нижняя граница для врагов
@@ -39,7 +40,6 @@ class PokemonGameLogic:
     def generate_initial_deck(self) -> List[Dict]:
         basic_pokemons = [
             {"id": 1, "name": "Charmander", "element": "fire", "health": 60, "attack": 12, "speed": 2.0},
-            # Добавили скорость
             {"id": 2, "name": "Squirtle", "element": "water", "health": 70, "attack": 10, "speed": 1.8},
             {"id": 3, "name": "Bulbasaur", "element": "grass", "health": 65, "attack": 11, "speed": 1.6},
         ]
@@ -47,7 +47,7 @@ class PokemonGameLogic:
 
     def generate_wave(self, wave_number: int) -> List[Dict]:
         enemies = []
-        base_count = min(3 + wave_number, 10)  # Увеличили максимум с 8 до 10
+        base_count = min(3 + wave_number, 10)
 
         for i in range(base_count):
             enemy_types = [
@@ -89,32 +89,39 @@ class PokemonGameLogic:
 
         return {"success": True, "pokemon": new_pokemon}
 
-    def play_card(self, card_id: int, x: int, y: int) -> Dict:
+    def play_card(self, card_id: int, x: int) -> Dict:  # ⭐ ИЗМЕНЕНИЕ: убран параметр y
+        """Размещение покемона на базе игрока (фиксированная высота)"""
         card_index = next((i for i, card in enumerate(self.hand) if card["id"] == card_id), None)
 
         if card_index is None:
             return {"error": "Card not found in hand"}
 
-        # Проверяем валидность позиции (игровая зона - теперь от 150 до 500 по Y)
-        if x < 0 or x > 800 or y < 150 or y > 450:
-            return {"error": "Invalid position - must be within play area (y between 150-450)"}
+        # ⭐ ФИКСИРОВАННАЯ позиция Y - база игрока
+        base_y = self.player_base_y - 50  # Немного выше базы для визуализации
 
-        # Проверяем, не занята ли клетка
+        # Проверяем только X координату (клик по горизонтали)
+        if x < 50 or x > 750:  # Ограничиваем по краям поля
+            return {"error": "Position out of bounds"}
+
+        # Проверяем, не занята ли позиция (допускаем минимальное расстояние 80px)
         for pokemon in self.field:
-            if abs(pokemon["x"] - x) < 60 and abs(pokemon["y"] - y) < 60:
-                return {"error": "Position already occupied"}
+            if abs(pokemon["x"] - x) < 80 and abs(pokemon["y"] - base_y) < 50:
+                return {"error": "Position already occupied by another Pokemon"}
 
         card = self.hand.pop(card_index)
         field_pokemon = {
             **card,
             "x": x,
-            "y": y,
+            "y": base_y,  # ⭐ ФИКСИРОВАННАЯ Y координата
             "current_health": card["health"],
+            "max_health": card["health"],  # ⭐ НОВОЕ: максимальное здоровье
             "attack_cooldown": 0,
             "is_moving": False,
             "target": None,
             "speed": card.get("speed", 1.5),
-            "attack_range": 120  # Радиус атаки
+            "attack_range": 120,
+            "reached_enemy_base": False,  # ⭐ НОВОЕ: достиг базы врага
+            "base_damage_timer": 0  # ⭐ НОВОЕ: таймер для урона на базе врага
         }
         self.field.append(field_pokemon)
 
@@ -155,7 +162,7 @@ class PokemonGameLogic:
             if distance < enemy["speed"] * delta_time:
                 enemy["y"] = target_y
                 # Враг дошел до базы
-                self.player_health -= 20  # Увеличили урон с 15 до 20
+                self.player_health -= 20
                 self.enemies.remove(enemy)
 
                 if self.player_health <= 0:
@@ -164,61 +171,86 @@ class PokemonGameLogic:
                 # Продолжаем движение вниз
                 enemy["y"] += enemy["speed"] * delta_time if dy > 0 else -enemy["speed"] * delta_time
 
-        # Логика движения и атаки покемонов
+        # ⭐ НОВАЯ ЛОГИКА: покемоны на вражеской базе получают урон
+        pokemons_to_remove = []
+
         for pokemon in self.field:
             pokemon["attack_cooldown"] = max(0, pokemon["attack_cooldown"] - delta_time)
 
-            # Ищем ближайшего врага
-            nearest_enemy = None
-            nearest_distance = float('inf')
+            # Если покемон уже на вражеской базе
+            if pokemon.get("reached_enemy_base", False):
+                pokemon["base_damage_timer"] += delta_time
 
-            for enemy in self.enemies:
-                distance = ((pokemon["x"] - enemy["x"]) ** 2 + (pokemon["y"] - enemy["y"]) ** 2) ** 0.5
-                if distance < pokemon["attack_range"] and distance < nearest_distance:
-                    nearest_enemy = enemy
-                    nearest_distance = distance
+                # Каждую секунду наносим урон равный номеру волны
+                if pokemon["base_damage_timer"] >= 1.0:
+                    pokemon["current_health"] -= self.wave
+                    pokemon["base_damage_timer"] = 0
 
-            if nearest_enemy:
-                # Если враг в радиусе атаки
-                pokemon["is_moving"] = False
-                pokemon["target"] = nearest_enemy["id"]
-
-                if pokemon["attack_cooldown"] <= 0:
-                    damage_multiplier = self.get_type_multiplier(pokemon["element"], nearest_enemy["element"])
-                    damage = pokemon["attack"] * damage_multiplier
-
-                    nearest_enemy["current_health"] -= damage
-                    pokemon["attack_cooldown"] = 0.8  # Уменьшили КД с 1.0 до 0.8 секунд
-
-                    if nearest_enemy["current_health"] <= 0:
-                        self.enemies.remove(nearest_enemy)
-                        self.score += 15  # Увеличили награду с 10 до 15
-                        self.player_exp += 2  # Увеличили опыт с 1 до 2
-
-                        if self.player_exp >= self.player_max_exp:
-                            self.player_level += 1
-                            self.pokeballs += 2  # Увеличили награду с 1 до 2
-                            self.player_exp = 0
-                            self.player_max_exp = int(self.player_max_exp * 1.2)
+                    # Если здоровье закончилось - удаляем покемона
+                    if pokemon["current_health"] <= 0:
+                        pokemons_to_remove.append(pokemon)
+                        continue
             else:
-                # Если врагов нет, двигаемся вверх к вражеской базе
-                pokemon["is_moving"] = True
-                pokemon["target"] = None
+                # Ищем ближайшего врага
+                nearest_enemy = None
+                nearest_distance = float('inf')
 
-                # Двигаемся вверх с учетом скорости покемона
-                target_y = self.enemy_base_y
-                dy = target_y - pokemon["y"]
-                distance = abs(dy)
+                for enemy in self.enemies:
+                    distance = ((pokemon["x"] - enemy["x"]) ** 2 + (pokemon["y"] - enemy["y"]) ** 2) ** 0.5
+                    if distance < pokemon["attack_range"] and distance < nearest_distance:
+                        nearest_enemy = enemy
+                        nearest_distance = distance
 
-                if distance > 10:  # Если не достигли цели
-                    # Двигаемся вверх
-                    pokemon["y"] -= pokemon["speed"] * delta_time * 30  # Умножаем на 30 для видимой скорости
+                if nearest_enemy:
+                    # Если враг в радиусе атаки
+                    pokemon["is_moving"] = False
+                    pokemon["target"] = nearest_enemy["id"]
 
-                    # Проверяем, достигли ли вражеской базы
-                    if pokemon["y"] <= target_y:
-                        # Атакуем вражескую базу
-                        self.score += 50  # Награда за достижение вражеской базы
-                        pokemon["y"] = target_y  # Фиксируем позицию
+                    if pokemon["attack_cooldown"] <= 0:
+                        damage_multiplier = self.get_type_multiplier(pokemon["element"], nearest_enemy["element"])
+                        damage = pokemon["attack"] * damage_multiplier
+
+                        nearest_enemy["current_health"] -= damage
+                        pokemon["attack_cooldown"] = 0.8
+
+                        if nearest_enemy["current_health"] <= 0:
+                            self.enemies.remove(nearest_enemy)
+                            self.score += 15
+                            self.player_exp += 2
+                            self.poke_coins += 1  # ⭐ НОВОЕ: монеты за врага
+
+                            if self.player_exp >= self.player_max_exp:
+                                self.player_level += 1
+                                self.pokeballs += 2
+                                self.player_exp = 0
+                                self.player_max_exp = int(self.player_max_exp * 1.2)
+                else:
+                    # Если врагов нет, двигаемся вверх к вражеской базе
+                    pokemon["is_moving"] = True
+                    pokemon["target"] = None
+
+                    # Двигаемся вверх с учетом скорости покемона
+                    target_y = self.enemy_base_y
+                    dy = target_y - pokemon["y"]
+                    distance = abs(dy)
+
+                    if distance > 10:  # Если не достигли цели
+                        # Двигаемся вверх
+                        pokemon["y"] -= pokemon["speed"] * delta_time * 30
+
+                        # Проверяем, достигли ли вражеской базы
+                        if pokemon["y"] <= target_y:
+                            pokemon["y"] = target_y
+                            pokemon["reached_enemy_base"] = True
+                            pokemon["is_moving"] = False
+                            pokemon["base_damage_timer"] = 0
+                            # Награда за достижение вражеской базы
+                            self.score += 50
+                            self.poke_coins += 5  # ⭐ НОВОЕ: монеты за достижение базы
+
+        # Удаляем погибших покемонов
+        for pokemon in pokemons_to_remove:
+            self.field.remove(pokemon)
 
         # Проверка победы (после 5 волн)
         if self.wave > 5:
@@ -248,13 +280,16 @@ class PokemonGameLogic:
             "player_exp": self.player_exp,
             "player_max_exp": self.player_max_exp,
             "pokeballs": self.pokeballs,
+            "poke_coins": self.poke_coins,  # ⭐ НОВОЕ: монеты в состоянии
             "hand": self.hand,
             "field": [
                 {
                     **pokemon,
                     "is_moving": pokemon.get("is_moving", False),
                     "target": pokemon.get("target"),
-                    "speed": pokemon.get("speed", 1.5)
+                    "speed": pokemon.get("speed", 1.5),
+                    "reached_enemy_base": pokemon.get("reached_enemy_base", False),  # ⭐ НОВОЕ
+                    "max_health": pokemon.get("max_health", pokemon["health"])  # ⭐ НОВОЕ
                 }
                 for pokemon in self.field
             ],
@@ -269,15 +304,20 @@ class PokemonGameLogic:
 
     def get_game_result(self) -> Dict:
         game_duration = (datetime.now() - self.start_time).total_seconds()
+
+        # ⭐ НОВОЕ: Рассчитываем награду в Poke Coins
+        base_coins = self.poke_coins  # Уже заработанные в игре
+        wave_bonus = (self.wave - 1) * 10  # Бонус за пройденные волны
+        victory_bonus = 50 if self.victory else 0
+
+        total_coins = base_coins + wave_bonus + victory_bonus
+
         return {
             "victory": self.victory,
             "score": self.score,
+            "poke_coins_earned": total_coins,  # ⭐ НОВОЕ: заработанные монеты
             "waves_completed": self.wave - 1,
             "pokemons_caught": len(self.hand) + len(self.field),
             "enemies_defeated": self.score // 15,
             "game_duration": game_duration
         }
-
-
-# Глобальный словарь для хранения активных игр
-active_games = {}

@@ -2,18 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{% block title %}Pokemon Tower Defense{% endblock %}</title>
+
+    <!-- Подключаем CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/game.css">
+    <link rel="stylesheet" href="/static/css/lobby.css">
+
     {% block extra_css %}{% endblock %}
+
+    <style>
+        /* Быстрые стили для отладки */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body.lobby-body, body.game-body {
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
+<body class="{% block body_class %}{% endblock %}">
+    <div id="app">
         {% block content %}{% endblock %}
     </div>
 
-    <script src="/static/js/auth.js"></script>
+    <!-- Подключаем общие утилиты -->
     <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

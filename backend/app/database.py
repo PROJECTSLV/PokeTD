@@ -5,11 +5,10 @@ from .config import settings
 import os
 
 # Создаем директорию для базы данных, если её нет
-db_path = "./game.db"
+db_path = "./game4.db"
 db_dir = os.path.dirname(db_path)
 if db_dir and not os.path.exists(db_dir):
     os.makedirs(db_dir, exist_ok=True)
-
 try:
     engine = create_engine(
         settings.SQLALCHEMY_DATABASE_URL,
