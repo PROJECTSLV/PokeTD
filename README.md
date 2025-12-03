@@ -1,5 +1,9 @@
 # 🎮 PokeTD - Pokemon Tower Defense
 
+# 🎮  DEPLOY GAME VERSION
+
+https://poketd-1.onrender.com
+
 ![Version](https://img.shields.io/badge/version-0.0.2-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
