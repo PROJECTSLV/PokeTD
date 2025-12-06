@@ -1,4 +1,8 @@
 🎮 PokeTD - Pokémon Tower Defense Game
+
+![Version](https://img.shields.io/badge/version-0.0.2-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![Lobby](screens/2025-12-06_21-48-22.png)
 
 
